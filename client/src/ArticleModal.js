@@ -4,18 +4,21 @@ import './ArticleModal.css';
 const ArticleModal = ({ article, onClose }) => {
   const [fullArticle, setFullArticle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [renderError, setRenderError] = useState(false);
 
   // Fetch full article content
   useEffect(() => {
     const fetchFullArticle = async () => {
       try {
         setLoading(true);
+        setRenderError(false);
         const response = await fetch(`/api/article/${encodeURIComponent(article.title)}`);
         const html = await response.text();
         setFullArticle(html);
       } catch (error) {
         console.error('Error fetching full article:', error);
         setFullArticle(null);
+        setRenderError(true);
       } finally {
         setLoading(false);
       }
@@ -71,6 +74,11 @@ const ArticleModal = ({ article, onClose }) => {
             <div className="loading-article">
               <div className="loading-article-spinner"></div>
               <p>Loading full article...</p>
+            </div>
+          ) : renderError ? (
+            <div className="modal-full-article">
+              <p>Unable to load full article content. Here's the summary:</p>
+              <p className="modal-text">{article.extract}</p>
             </div>
           ) : fullArticle ? (
             <div 
