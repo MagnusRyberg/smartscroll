@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 8008;
@@ -10,6 +11,13 @@ app.use(cors());
 app.use(express.json());
 
 // Serve static files from the React app build directory
+// Serve a lightweight jQuery static app (if present) before the React build.
+const jqueryStaticDir = path.join(__dirname, '..', 'client', 'jquery');
+if (fs.existsSync(jqueryStaticDir)) {
+  app.use(express.static(jqueryStaticDir));
+}
+
+// Serve static files from the React app build directory (if present)
 app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
 
 // Fetch random Wikipedia articles
@@ -68,9 +76,20 @@ app.get('/api/article/:title', async (req, res) => {
   }
 });
 
-// Catch all handler: send back React's index.html file for any non-API routes
+// Catch all handler: prefer serving the jQuery index if it exists, otherwise fall back to React build.
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'client', 'build', 'index.html'));
+  const jqueryIndex = path.join(__dirname, '..', 'client', 'jquery', 'index.html');
+  const reactIndex = path.join(__dirname, '..', 'client', 'build', 'index.html');
+
+  if (fs.existsSync(jqueryIndex)) {
+    return res.sendFile(jqueryIndex);
+  }
+
+  if (fs.existsSync(reactIndex)) {
+    return res.sendFile(reactIndex);
+  }
+
+  res.status(404).send('Not found');
 });
 
 app.listen(PORT, () => {
