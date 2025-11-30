@@ -1,162 +1,47 @@
-# SmartScroll - Wikipedia Article Feed
+SmartScroll — New SPA for Azure Static Web Apps
 
-A mobile-first web application that displays random Wikipedia articles in an infinite scrolling feed, similar to Instagram or Twitter/X.
+This folder contains a minimal single-page application (`app/`) and Azure Functions (`api/`) intended for deployment to Azure Static Web Apps.
 
-## Features
+Quick start (local)
 
-- 📱 Mobile-optimized responsive design
-- 🔄 Infinite scroll with automatic loading
-- 📰 Random Wikipedia articles with images
-- ✂️ Text truncation at 200 characters with expand/collapse
-- 🎨 Dark theme optimized for mobile viewing
-- 🔗 Links to full Wikipedia articles
-
-## Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
-
-## Installation
-
-1. Install all dependencies:
-```bash
-npm run install-all
-```
-
-## Running the Application
-
-### Development Mode
-
-Run the combined server (builds React app and serves everything):
+1. Install dependencies for the functions (from repo root):
 
 ```bash
-npm run dev
+cd new-app
+npm install
 ```
 
-This will:
-- Build the React frontend
-- Start the Express server on port 8008
-- Serve both API and static files from one server
-
-### Production Mode
-
-For production deployment:
+2a. Serve the static app locally on port 8080:
 
 ```bash
 npm start
+# then open http://localhost:8080
 ```
 
-### Individual Commands
+2b. (Optional) Use Azure Static Web Apps CLI to run both app and functions locally (requires `@azure/static-web-apps-cli`):
 
-**Build the React app:**
 ```bash
-npm run build
+npx swa-cli@latest start ./app --api ./api
 ```
 
-**Start only the server:**
-```bash
-npm run server
-```
+Deployment (Azure Static Web Apps)
 
-## Usage
+- Point the Static Web App to the `new-app` folder as the repository root (or move files to repo root). Set the app artifact location to `app` and API location to `api`.
 
-1. Open `http://localhost:8008` in your browser (preferably in mobile view)
-2. Scroll through random Wikipedia articles
-3. Click "Read more" on any article to expand the full text
-4. Click the Wikipedia link to view the complete article on Wikipedia
-5. Keep scrolling - new articles load automatically!
+Notes
+- The `api/` functions use `axios` to call Wikipedia REST API; they are written as Azure Functions (JavaScript) and expect to be deployed behind Azure Static Web Apps which maps `/api/*` to them.
 
-## Deployment
 
-### Azure Static Web Apps (Recommended)
 
-This app is optimized for deployment to Azure Static Web Apps:
+# Purpose of the app:
+Purpose — short
+SmartScroll is a lightweight, mobile‑first feed app that shows random Wikipedia articles as a swipe/scrollable feed. It’s designed to give quick, readable article summaries in a dark, card‑style UI and let users open full articles on Wikipedia.
 
-1. **Create Azure Static Web App** in Azure Portal
-2. **Connect your GitHub repository**
-3. **Configure build settings:**
-   - Build command: `npm run build`
-   - Output location: `client/build`
-   - API location: `server` (optional for advanced setups)
-
-### Azure App Service
-
-For full server control:
-
-1. **Create Web App** in Azure Portal
-2. **Set runtime stack** to Node.js
-3. **Configure deployment** from GitHub
-4. **Set startup command:** `npm start`
-
-### Vercel (Alternative)
-
-If you prefer Vercel:
-
-1. **Connect GitHub repository** to Vercel
-2. **Use default settings** - the app is already configured
-
-See `AZURE_DEPLOYMENT.md` for detailed deployment instructions.
-
-## Project Structure
-
-```
-smartscroll/
-├── server/
-│   └── index.js          # Express backend API + static file serving
-├── client/
-│   ├── public/
-│   │   └── index.html    # HTML template
-│   ├── src/
-│   │   ├── App.js        # Main app component
-│   │   ├── App.css       # App styles
-│   │   ├── ArticleCard.js    # Article card component
-│   │   ├── ArticleCard.css   # Card styles
-│   │   ├── ArticleModal.js   # Modal component
-│   │   ├── ArticleModal.css  # Modal styles
-│   │   ├── index.js      # React entry point
-│   │   └── index.css     # Global styles
-│   └── build/            # Built React app (generated)
-│       ├── index.html
-│       ├── static/
-│       └── ...
-├── package.json          # Root dependencies and scripts
-└── README.md            # This file
-```
-
-## API
-
-### GET /api/random-articles
-
-Fetches random Wikipedia articles.
-
-**Query Parameters:**
-- `count` (optional): Number of articles to fetch (default: 5)
-
-**Response:**
-```json
-[
-  {
-    "title": "Article Title",
-    "extract": "Article summary text...",
-    "thumbnail": "https://image-url.jpg",
-    "pageId": 12345,
-    "url": "https://en.wikipedia.org/wiki/Article_Title"
-  }
-]
-```
-
-## Technologies Used
-
-- **Backend:** Node.js, Express, Axios
-- **Frontend:** React, CSS3
-- **API:** Wikipedia REST API v1
-
-## Mobile Testing
-
-For best experience, open in Chrome DevTools mobile view or on an actual mobile device.
-
-Recommended viewport: 375x812 (iPhone X/11/12 size)
-
-## License
-
-ISC
+What it does (features)
+Fetches random article summaries from Wikipedia and displays them as cards.
+Infinite scroll (loads more when you reach the bottom) and a “load more” fallback.
+Each card shows a thumbnail (if available), title, short extract and a link to the full article.
+Dark, mobile‑friendly UI with a compact card layout and loading/error states.
+Two deployment patterns supported:
+Static SPA + Azure Functions (serverless) under api — recommended for Azure Static Web Apps.
+Local Express server option (archived under old) for running backend + static together.

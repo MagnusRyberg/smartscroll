@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SmartScroll — Static</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>SmartScroll</h1>
+    <small>Random Wikipedia feed — static demo</small>
+  </header>
+
+  <main id="app">
+    <div id="feed" class="feed" aria-live="polite">
+      <!-- Cards will be appended here -->
+    </div>
+
+    <div id="loader" class="loader hidden">Loading…</div>
+
+    <div class="controls">
+      <button id="loadMore">Load more</button>
+      <label><input id="autoLoad" type="checkbox" checked> Auto-load on scroll</label>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Modal for expanded item view -->
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-backdrop" data-close="true"></div>
+      <div class="modal-dialog">
+        <button class="modal-close" aria-label="Close">×</button>
+        <div class="modal-body">
+          <div class="modal-image"><img src="" alt=""></div>
+          <h2 class="modal-title"></h2>
+          <p class="modal-extract"></p>
+          <p class="modal-actions"><a class="linkbtn modal-link" href="#" target="_blank">Open on Wikipedia</a></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">No server required — open <code>index.html</code> in your browser</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
