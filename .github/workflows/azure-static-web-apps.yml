@@ -11,6 +11,10 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     name: Build and deploy static app to Azure Static Web Apps
+    env:
+      # Change these if your static site files live in a subfolder (for example: app or client/build)
+      APP_LOCATION: "."
+      OUTPUT_LOCATION: "."
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,13 +38,26 @@ jobs:
             echo "AZURE_STATIC_WEB_APPS_API_TOKEN is set. Proceeding to deploy."
           fi
 
+      - name: Validate app artifact location
+        run: |
+          echo "Validating app artifact location: '${APP_LOCATION}'"
+          if [ -f "${APP_LOCATION}/index.html" ]; then
+            echo "index.html found in ${APP_LOCATION}. Continuing."
+          else
+            echo "index.html NOT found in ${APP_LOCATION}."
+            echo "Files at repo root:" && ls -la || true
+            echo "If your built artifacts live in a different folder, update the workflow's APP_LOCATION and OUTPUT_LOCATION (for example 'app' or 'client/build')."
+            echo "Skipping deploy; adjust APP_LOCATION/OUTPUT_LOCATION and re-run."
+            exit 1
+          fi
+
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Optional, used for PR comments
           action: "upload"
-          app_location: "." # Repo root contains index.html
+          app_location: "${{ env.APP_LOCATION }}"
           api_location: ""    # No API folder in this repo
-          output_location: "" # No build output directory
+          output_location: "${{ env.OUTPUT_LOCATION }}" # No build output directory by default
           skip_deploy_on_missing_secrets: true
