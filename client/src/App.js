@@ -7,7 +7,6 @@ function App() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const observerTarget = useRef(null);
 
@@ -23,7 +22,6 @@ function App() {
       
       const newArticles = await response.json();
       setArticles(prev => [...prev, ...newArticles]);
-      setPage(prev => prev + 1);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching articles:', err);
