@@ -40,8 +40,21 @@ jobs:
           # This project is a plain static SPA with index.html at repo root
           app_location: "."
           api_location: ""
-          output_location: ""
+          # Explicitly set the app artifact location to repo root so Oryx can find index.html
+          output_location: "."
           skip_deploy_on_missing_secrets: true
+
+      - name: Validate artifact location (post-deploy-check)
+        if: ${{ always() }}
+        run: |
+          echo "Checking that index.html is present at the expected artifact location './'"
+          if [ -f "index.html" ]; then
+            echo "index.html found at repo root. Oryx should be able to detect artifacts.";
+          else
+            echo "index.html NOT found at repo root. If your static files live in a subfolder (for example 'app' or 'client/build'), update 'app_location' and 'output_location' in .github/workflows/azure-static-web-apps.yml to point to that folder.";
+            echo "Repo root listing:"; ls -la || true
+            exit 1
+          fi
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
