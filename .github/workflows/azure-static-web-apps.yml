@@ -5,92 +5,42 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened]
-  workflow_dispatch: {}
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
 
 jobs:
-  build:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build static site and upload artifact
-    env:
-      APP_LOCATION: "."      # change to 'app' or 'client/build' if needed
-      OUTPUT_LOCATION: "."
+    name: Build and Deploy Job
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
         with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build (no-op for this repo)
-        run: npm run build
-
-      - name: Create artifact tarball
-        run: |
-          # Create a tarball of the app location so we can reuse it in the deploy job
-          echo "Creating tarball from '${{ env.APP_LOCATION }}'"
-          tar -czf site.tar.gz -C "${{ env.APP_LOCATION }}" .
-          ls -la site.tar.gz
-
-      - name: Upload site artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: site-artifact
-          path: site.tar.gz
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    name: Deploy artifact to Azure Static Web Apps
-    env:
-      APP_LOCATION: "."
-      OUTPUT_LOCATION: "."
-    steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: site-artifact
-          path: ./artifact
-
-      - name: Extract artifact
-        run: |
-          mkdir -p ./artifact/site
-          tar -xzf ./artifact/site.tar.gz -C ./artifact/site
-          echo "Extracted files in ./artifact/site:"
-          ls -la ./artifact/site | sed -n '1,200p'
-
-      - name: Check for Azure Static Web Apps token
-        run: |
-          if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
-            echo "AZURE_STATIC_WEB_APPS_API_TOKEN secret is not set. The deploy step will be skipped."
-          else
-            echo "AZURE_STATIC_WEB_APPS_API_TOKEN is set. Proceeding to deploy."
-          fi
-
-      - name: Validate extracted app artifact location
-        run: |
-          echo "Validating extracted site location: './artifact/site'"
-          if [ -f "./artifact/site/index.html" ]; then
-            echo "index.html found in ./artifact/site. Continuing."
-          else
-            echo "index.html NOT found in ./artifact/site."
-            echo "Files in ./artifact/site:" && ls -la ./artifact/site || true
-            echo "If your built artifacts live in a different folder, update APP_LOCATION/OUTPUT_LOCATION and re-run."
-            exit 1
-          fi
-
-      - name: Deploy to Azure Static Web Apps
+          submodules: true
+          lfs: false
+      - name: Build And Deploy
+        id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
-          app_location: "./artifact/site"
-          api_location: ""
-          output_location: "${{ env.OUTPUT_LOCATION }}"
-          skip_deploy_on_missing_secrets: true
+          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
+          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
+          app_location: "./client" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "build" # Built app content directory - optional
+          ###### End of Repository/Build Configurations ######
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    steps:
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
+          action: "close"
