@@ -6,14 +6,14 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
 
 jobs:
-  build_and_deploy:
+  build:
     runs-on: ubuntu-latest
-    name: Build and deploy static app to Azure Static Web Apps
+    name: Build static site and upload artifact
     env:
-      # Change these if your static site files live in a subfolder (for example: app or client/build)
-      APP_LOCATION: "."
+      APP_LOCATION: "."      # change to 'app' or 'client/build' if needed
       OUTPUT_LOCATION: "."
     steps:
       - name: Checkout repository
@@ -30,6 +30,40 @@ jobs:
       - name: Build (no-op for this repo)
         run: npm run build
 
+      - name: Create artifact tarball
+        run: |
+          # Create a tarball of the app location so we can reuse it in the deploy job
+          echo "Creating tarball from '${{ env.APP_LOCATION }}'"
+          tar -czf site.tar.gz -C "${{ env.APP_LOCATION }}" .
+          ls -la site.tar.gz
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: site-artifact
+          path: site.tar.gz
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy artifact to Azure Static Web Apps
+    env:
+      APP_LOCATION: "."
+      OUTPUT_LOCATION: "."
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: site-artifact
+          path: ./artifact
+
+      - name: Extract artifact
+        run: |
+          mkdir -p ./artifact/site
+          tar -xzf ./artifact/site.tar.gz -C ./artifact/site
+          echo "Extracted files in ./artifact/site:"
+          ls -la ./artifact/site | sed -n '1,200p'
+
       - name: Check for Azure Static Web Apps token
         run: |
           if [ -z "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
@@ -38,16 +72,15 @@ jobs:
             echo "AZURE_STATIC_WEB_APPS_API_TOKEN is set. Proceeding to deploy."
           fi
 
-      - name: Validate app artifact location
+      - name: Validate extracted app artifact location
         run: |
-          echo "Validating app artifact location: '${APP_LOCATION}'"
-          if [ -f "${APP_LOCATION}/index.html" ]; then
-            echo "index.html found in ${APP_LOCATION}. Continuing."
+          echo "Validating extracted site location: './artifact/site'"
+          if [ -f "./artifact/site/index.html" ]; then
+            echo "index.html found in ./artifact/site. Continuing."
           else
-            echo "index.html NOT found in ${APP_LOCATION}."
-            echo "Files at repo root:" && ls -la || true
-            echo "If your built artifacts live in a different folder, update the workflow's APP_LOCATION and OUTPUT_LOCATION (for example 'app' or 'client/build')."
-            echo "Skipping deploy; adjust APP_LOCATION/OUTPUT_LOCATION and re-run."
+            echo "index.html NOT found in ./artifact/site."
+            echo "Files in ./artifact/site:" && ls -la ./artifact/site || true
+            echo "If your built artifacts live in a different folder, update APP_LOCATION/OUTPUT_LOCATION and re-run."
             exit 1
           fi
 
@@ -55,9 +88,9 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Optional, used for PR comments
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "${{ env.APP_LOCATION }}"
-          api_location: ""    # No API folder in this repo
-          output_location: "${{ env.OUTPUT_LOCATION }}" # No build output directory by default
+          app_location: "./artifact/site"
+          api_location: ""
+          output_location: "${{ env.OUTPUT_LOCATION }}"
           skip_deploy_on_missing_secrets: true
