@@ -1,12 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 8008;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, '..', 'client', 'build')));
 
 // Fetch random Wikipedia articles
 app.get('/api/random-articles', async (req, res) => {
@@ -62,6 +66,11 @@ app.get('/api/article/:title', async (req, res) => {
     console.error('Error fetching full article:', error.message);
     res.status(500).json({ error: 'Failed to fetch full article' });
   }
+});
+
+// Catch all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'client', 'build', 'index.html'));
 });
 
 app.listen(PORT, () => {
