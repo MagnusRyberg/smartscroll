@@ -5,33 +5,43 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
     branches:
       - main
+  workflow_dispatch: {}
 
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
-    name: Build and Deploy Job
+    name: Build and Deploy Job (repo-root static SPA)
     steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-          lfs: false
-      - name: Build And Deploy
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Info - deployment token check
+        run: |
+          if [ -n "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
+            echo "Using AZURE_STATIC_WEB_APPS_API_TOKEN"
+          elif [ -n "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}" ]; then
+            echo "Using legacy AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03"
+          else
+            echo "No Azure Static Web Apps token found; deploy will be skipped (workflow will still succeed)."
+          fi
+
+      - name: Deploy site (repo root)
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          # Prefer the standard token name; fall back to legacy secret if present
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (PR comments, status)
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "./client" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "build" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+          # This project is a plain static SPA with index.html at repo root
+          app_location: "."
+          api_location: ""
+          output_location: ""
+          skip_deploy_on_missing_secrets: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -42,5 +52,5 @@ jobs:
         id: closepullrequest
         uses: Azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
           action: "close"
