@@ -1,3 +1,29 @@
+name: Azure Static Web Apps - Minimal deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy simple static site (repo root)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "."       # repo root contains index.html
+          api_location: ""        # no API
+          output_location: "."     # artifacts are at repo root
+          skip_deploy_on_missing_secrets: true
 name: Azure Static Web Apps CI/CD
 
 on:
@@ -29,7 +55,28 @@ jobs:
             echo "No Azure Static Web Apps token found; deploy will be skipped (workflow will still succeed)."
           fi
 
-      - name: Deploy site (repo root)
+      - name: Detect app artifact location
+        run: |
+          # Candidate locations to check for index.html
+          candidates=("." "app" "client" "client/build" "build" "dist")
+          found=""
+          for d in "${candidates[@]}"; do
+            if [ -f "$d/index.html" ]; then
+              found="$d"
+              break
+            fi
+          done
+          if [ -n "$found" ]; then
+            echo "Found index.html in: $found"
+            echo "APP_LOCATION=$found" >> $GITHUB_ENV
+            echo "OUTPUT_LOCATION=$found" >> $GITHUB_ENV
+          else
+            echo "No index.html found in common locations; defaulting to repo root '.'"
+            echo "APP_LOCATION=." >> $GITHUB_ENV
+            echo "OUTPUT_LOCATION=." >> $GITHUB_ENV
+          fi
+
+      - name: Deploy site
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -37,21 +84,21 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (PR comments, status)
           action: "upload"
-          # This project is a plain static SPA with index.html at repo root
-          app_location: "."
+          # Use detected app location
+          app_location: "${{ env.APP_LOCATION }}"
           api_location: ""
-          # Explicitly set the app artifact location to repo root so Oryx can find index.html
-          output_location: "."
+          # Explicitly set the app artifact location so Oryx can find index.html
+          output_location: "${{ env.OUTPUT_LOCATION }}"
           skip_deploy_on_missing_secrets: true
 
       - name: Validate artifact location (post-deploy-check)
         if: ${{ always() }}
         run: |
-          echo "Checking that index.html is present at the expected artifact location './'"
-          if [ -f "index.html" ]; then
-            echo "index.html found at repo root. Oryx should be able to detect artifacts.";
+          echo "Checking that index.html is present at the detected artifact location '${{ env.OUTPUT_LOCATION }}'"
+          if [ -f "${{ env.OUTPUT_LOCATION }}/index.html" ]; then
+            echo "index.html found at '${{ env.OUTPUT_LOCATION }}'. Oryx should be able to detect artifacts.";
           else
-            echo "index.html NOT found at repo root. If your static files live in a subfolder (for example 'app' or 'client/build'), update 'app_location' and 'output_location' in .github/workflows/azure-static-web-apps.yml to point to that folder.";
-            echo "Repo root listing:"; ls -la || true
+            echo "index.html NOT found at '${{ env.OUTPUT_LOCATION }}'. If your static files live elsewhere, update 'app_location' and 'output_location' in .github/workflows/azure-static-web-apps.yml to point to that folder.";
+            echo "Detected listing for '${{ env.OUTPUT_LOCATION }}':"; ls -la "${{ env.OUTPUT_LOCATION }}" || true
             exit 1
           fi
