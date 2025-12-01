@@ -64,4 +64,9 @@ html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -app
 .modal-title{margin:12px 0 8px 0}
 .modal-extract{color:var(--muted);line-height:1.45}
 
+/* Modal favorite: blend with modal background but keep star visible */
+#modalFav.fav-star{position:static;right:auto;top:auto;margin-left:12px;background:transparent;border:none;color:rgba(255,255,255,0.28);font-size:18px;padding:6px 8px;border-radius:8px}
+#modalFav.fav-star.active{color:var(--accent)}
+#modalFav.fav-star:focus{outline:2px solid rgba(110,231,183,0.18)}
+
 .container{padding-top:6px}

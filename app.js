@@ -21,7 +21,7 @@ $(function(){
   function renderCard(item){
     const $card = $('<article>').addClass('card').attr('tabindex',0);
     // favorite star
-    const $star = $('<button>').addClass('fav-star').attr('aria-label','Save to favorites').html('☆');
+  const $star = $('<button>').attr('type','button').addClass('fav-star').attr('aria-label','Save to favorites').html('☆');
     $card.append($star);
     const $thumbWrap = $('<div>').addClass('thumb');
     const $img = $('<img>').attr('alt', item.title).attr('loading','lazy');
