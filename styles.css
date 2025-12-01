@@ -30,6 +30,11 @@ html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -app
 .modal-dialog{position:relative;background:var(--card);border-radius:12px;max-width:760px;width:92%;z-index:70;box-shadow:0 10px 40px rgba(0,0,0,0.6);overflow:hidden;display:flex;flex-direction:column;max-height:85vh}
 .modal-body{padding:18px;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
 .linkbtn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent);padding:8px 10px;border-radius:8px;text-decoration:none;font-size:14px}
+
+/* Favorites */
+.fav-star{position:absolute;right:10px;top:10px;font-size:20px;color:rgba(255,255,255,0.22);cursor:pointer}
+.fav-star.active{color:var(--accent)}
+.fav-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);padding:6px 8px;border-radius:8px;cursor:pointer}
 .loader{text-align:center;padding:12px;color:var(--muted)}
 .controls{max-width:760px;margin:12px auto;display:flex;gap:12px;align-items:center;padding:0 12px}
 .controls button{background:#202125;color:#eafaf0;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}

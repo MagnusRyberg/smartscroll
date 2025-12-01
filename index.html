@@ -10,7 +10,10 @@
 <body>
   <header class="topbar">
     <h1>SmartScroll</h1>
-    <small>Random Wikipedia feed — static demo</small>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <small>Random Wikipedia feed — static demo</small>
+      <button id="toggleFavorites" class="fav-btn" title="Show favorites">★ Favorites</button>
+    </div>
   </header>
 
   <main id="app">
@@ -33,7 +36,10 @@
       <div class="modal-dialog">
         <button class="modal-close" aria-label="Close">×</button>
         <div class="modal-body">
-          <p class="modal-actions modal-top"><a class="linkbtn modal-link" href="#" target="_blank">Open on Wikipedia</a></p>
+          <p class="modal-actions modal-top">
+            <a class="linkbtn modal-link" href="#" target="_blank">Open on Wikipedia</a>
+            <button id="modalFav" class="fav-star" aria-label="Save to favorites">☆</button>
+          </p>
           <div class="modal-image"><img src="" alt=""></div>
           <h2 class="modal-title"></h2>
           <p class="modal-extract"></p>
