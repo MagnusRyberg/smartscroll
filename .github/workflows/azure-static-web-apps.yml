@@ -17,8 +17,14 @@ jobs:
       - name: Package site artifact
         run: |
           echo "Creating site artifact tarball..."
-          # Exclude the .git directory and node_modules if present
-          tar --exclude='./.git' --exclude='./node_modules' -czf site.tar.gz -C . .
+          # Prefer creating the archive from git HEAD to avoid files changing during read
+          if [ -d ".git" ]; then
+            echo "Creating archive from git HEAD"
+            git archive --format=tar.gz -o site.tar.gz HEAD
+          else
+            echo "No .git directory found, falling back to tar (may fail if files change while reading)"
+            tar --exclude='./.git' --exclude='./node_modules' -czf site.tar.gz -C . .
+          fi
           ls -la site.tar.gz
 
       - name: Upload site artifact
