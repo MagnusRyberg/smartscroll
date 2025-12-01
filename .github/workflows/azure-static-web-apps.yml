@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy simple static site (repo root)
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
