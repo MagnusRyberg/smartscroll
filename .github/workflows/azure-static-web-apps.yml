@@ -1,4 +1,4 @@
-name: Azure Static Web Apps - Minimal deploy
+name: Azure Static Web Apps - Simple SPA deploy
 
 on:
   push:
@@ -9,8 +9,22 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy simple static site (repo root)
+    name: Deploy SPA (repo root)
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create SPA config (staticwebapp.config.json)
+        run: |
+          cat > staticwebapp.config.json <<'JSON'
+          {
+            "navigationFallback": {
+              "rewrite": "/index.html",
+              "exclude": ["/images/*", "/css/*", "/js/*"]
+            }
+          }
+          JSON
+          echo "Created staticwebapp.config.json:" && cat staticwebapp.config.json
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -18,85 +32,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "."       # repo root contains index.html
-          api_location: ""        # no API
-          output_location: "."     # artifacts are at repo root
-          skip_deploy_on_missing_secrets: true
-name: Azure Static Web Apps CI/CD
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - main
-  workflow_dispatch: {}
-
-jobs:
-  build_and_deploy_job:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    name: Build and Deploy Job (repo-root static SPA)
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Info - deployment token check
-        run: |
-          if [ -n "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" ]; then
-            echo "Using AZURE_STATIC_WEB_APPS_API_TOKEN"
-          elif [ -n "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}" ]; then
-            echo "Using legacy AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03"
-          else
-            echo "No Azure Static Web Apps token found; deploy will be skipped (workflow will still succeed)."
-          fi
-
-      - name: Detect app artifact location
-        run: |
-          # Candidate locations to check for index.html
-          candidates=("." "app" "client" "client/build" "build" "dist")
-          found=""
-          for d in "${candidates[@]}"; do
-            if [ -f "$d/index.html" ]; then
-              found="$d"
-              break
-            fi
-          done
-          if [ -n "$found" ]; then
-            echo "Found index.html in: $found"
-            echo "APP_LOCATION=$found" >> $GITHUB_ENV
-            echo "OUTPUT_LOCATION=$found" >> $GITHUB_ENV
-          else
-            echo "No index.html found in common locations; defaulting to repo root '.'"
-            echo "APP_LOCATION=." >> $GITHUB_ENV
-            echo "OUTPUT_LOCATION=." >> $GITHUB_ENV
-          fi
-
-      - name: Deploy site
-        id: builddeploy
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          # Prefer the standard token name; fall back to legacy secret if present
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN || secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_FLOWER_06D277C03 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (PR comments, status)
-          action: "upload"
-          # Use detected app location
-          app_location: "${{ env.APP_LOCATION }}"
+          app_location: "."
           api_location: ""
-          # Explicitly set the app artifact location so Oryx can find index.html
-          output_location: "${{ env.OUTPUT_LOCATION }}"
+          output_location: "."
           skip_deploy_on_missing_secrets: true
-
-      - name: Validate artifact location (post-deploy-check)
-        if: ${{ always() }}
-        run: |
-          echo "Checking that index.html is present at the detected artifact location '${{ env.OUTPUT_LOCATION }}'"
-          if [ -f "${{ env.OUTPUT_LOCATION }}/index.html" ]; then
-            echo "index.html found at '${{ env.OUTPUT_LOCATION }}'. Oryx should be able to detect artifacts.";
-          else
-            echo "index.html NOT found at '${{ env.OUTPUT_LOCATION }}'. If your static files live elsewhere, update 'app_location' and 'output_location' in .github/workflows/azure-static-web-apps.yml to point to that folder.";
-            echo "Detected listing for '${{ env.OUTPUT_LOCATION }}':"; ls -la "${{ env.OUTPUT_LOCATION }}" || true
-            exit 1
-          fi
