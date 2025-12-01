@@ -42,8 +42,6 @@ $(function(){
 
   // card body contains title and the full extract (show all text)
   const $body = $('<div>').addClass('card-body');
-  $body.append($('<h3>').addClass('title').text(item.title));
-  $body.append($('<p>').addClass('extract').text(item.extract || 'No summary available.'));
   $card.append($body);
 
     // store full item data for modal
@@ -72,7 +70,7 @@ $(function(){
     $modalTitle.text(item.title || '');
     // Show up to 1000 characters in the modal extract to avoid overly long content
     const fullText = item.extract || '';
-    const modalText = fullText.length > 1000 ? fullText.slice(0,1000).trim() + '…' : fullText;
+    const modalText = fullText.length > 1500 ? fullText.slice(0,1500).trim() + '…' : fullText;
     $modalExtract.text(modalText);
     $modalLink.attr('href', item.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`);
     $modal.removeClass('hidden').attr('aria-hidden','false');
