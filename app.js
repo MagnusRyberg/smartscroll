@@ -7,6 +7,8 @@ $(function(){
 
   let isLoading = false;
   let queued = 0;
+  // track seen article titles to avoid duplicates (helps when API or client caches responses)
+  const seenTitles = new Set();
 
   // Wikipedia REST endpoints
   const RANDOM_ENDPOINT = 'https://en.wikipedia.org/api/rest_v1/page/random/summary';
@@ -90,14 +92,21 @@ $(function(){
 
     const requests = [];
     for(let i=0;i<count;i++){
-      requests.push($.ajax({url: RANDOM_ENDPOINT, method:'GET', dataType:'json'}));
+      // disable caching to avoid Safari/iOS returning cached responses for the same URL
+      requests.push($.ajax({url: RANDOM_ENDPOINT, method:'GET', dataType:'json', cache: false}));
     }
 
   return Promise.allSettled(requests).then(results=>{
       let added = 0;
       results.forEach(r=>{
         if(r.status === 'fulfilled' && r.value){
+          const title = r.value.title || '';
+          if(seenTitles.has(title)){
+            // skip duplicates
+            return;
+          }
           renderCard(r.value);
+          seenTitles.add(title);
           added++;
         }
       });
