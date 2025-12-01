@@ -54,4 +54,6 @@ jobs:
           app_location: "."
           api_location: ""
           output_location: "."
+          # Explicitly tell Oryx there is no build step for this simple static site
+          app_build_command: "echo \"No build step for static SPA\""
           skip_deploy_on_missing_secrets: true
