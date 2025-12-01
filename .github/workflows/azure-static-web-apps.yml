@@ -22,7 +22,7 @@ jobs:
           ls -la site.tar.gz
 
       - name: Upload site artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: site-artifact
           path: site.tar.gz
