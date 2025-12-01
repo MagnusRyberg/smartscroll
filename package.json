@@ -2,13 +2,5 @@
   "name": "smartscroll-new-app",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "start": "npx http-server ./app -p 8080",
-    "start:sw": "swa start ./app --api ./api",
-    "build": "echo \"No build step for static SPA\""
-  },
-  "dependencies": {
-    "axios": "^1.6.2"
-  },
-  "devDependencies": {}
+  "scripts": {}
 }

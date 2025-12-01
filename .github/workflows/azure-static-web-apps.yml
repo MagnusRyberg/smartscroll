@@ -14,6 +14,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Package site artifact
+        run: |
+          echo "Creating site artifact tarball..."
+          # Exclude the .git directory and node_modules if present
+          tar --exclude='./.git' --exclude='./node_modules' -czf site.tar.gz -C . .
+          ls -la site.tar.gz
+
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: site-artifact
+          path: site.tar.gz
+
       - name: Create SPA config (staticwebapp.config.json)
         run: |
           cat > staticwebapp.config.json <<'JSON'
