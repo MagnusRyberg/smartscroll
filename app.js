@@ -70,7 +70,10 @@ $(function(){
     $modalImage.attr('src', item.thumbnail?.source || '');
     $modalImage.attr('alt', item.title || '');
     $modalTitle.text(item.title || '');
-    $modalExtract.text(item.extract || '');
+    // Show up to 1000 characters in the modal extract to avoid overly long content
+    const fullText = item.extract || '';
+    const modalText = fullText.length > 1000 ? fullText.slice(0,1000).trim() + '…' : fullText;
+    $modalExtract.text(modalText);
     $modalLink.attr('href', item.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`);
     $modal.removeClass('hidden').attr('aria-hidden','false');
     setTimeout(()=> $modal.find('.modal-close').focus(), 50);
